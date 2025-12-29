@@ -1,19 +1,15 @@
-# IDEA 配置文件
+# IDEA configuration files
 .idea/
 *.iml
 
-# 编译输出
+# Build output
 target/
 out/
 
-# 敏感配置文件 (Java)
+# Sensitive configuration files (Java)
 src/main/resources/application-local.properties
 application.properties
 
-# 日志与临时文件
+# Logs and temporary files
 *.log
 log.txt
-
-# Python 缓存
-__pycache__/
-*.py[cod]

@@ -1,6 +1,7 @@
 package com.qicesun.sreagent.config;
 
 import com.qicesun.sreagent.agent.DevOpsAssistant;
+import com.qicesun.sreagent.agent.DevOpsSystemMessageProvider;
 import com.qicesun.sreagent.agent.SessionMemoryStore;
 import com.qicesun.sreagent.tools.gitlab.GitLabTool;
 import com.qicesun.sreagent.tools.jira.JiraTool;
@@ -35,9 +36,11 @@ public class AgentConfig {
             GitLabTool gitLabTool,
             WebScraperTool webScraperTool,
             JiraTool jiraTool,
+            DevOpsSystemMessageProvider systemMessageProvider,
             SessionMemoryStore memoryStore) {
         return AiServices.builder(DevOpsAssistant.class)
                 .chatLanguageModel(chatLanguageModel)
+                .systemMessageProvider(systemMessageProvider::systemMessageFor)
                 .chatMemoryProvider(memoryStore::get)
                 .tools(k8sTool, gitLabTool, webScraperTool, jiraTool)
                 .build();

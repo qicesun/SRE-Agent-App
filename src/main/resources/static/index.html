@@ -126,6 +126,9 @@
       .markdown {
         color: inherit;
       }
+      .markdown.streaming {
+        white-space: pre-wrap;
+      }
       .markdown h1,
       .markdown h2,
       .markdown h3 {
@@ -1130,24 +1133,65 @@
           }
 
           const assistantEl = appendAssistantStream();
+          assistantEl.container.classList.add("streaming");
           const reader = response.body.getReader();
           const decoder = new TextDecoder();
           let buffer = "";
+          let renderedLength = 0;
+          let streamCompleted = false;
+          let rafId = null;
+          let lastRenderTs = performance.now();
+          const charsPerSecond = 12000;
+
+          const scheduleRender = () => {
+            if (rafId !== null) {
+              return;
+            }
+            rafId = requestAnimationFrame(render);
+          };
+
+          const render = () => {
+            rafId = null;
+            const now = performance.now();
+            const deltaMs = Math.min(50, Math.max(0, now - lastRenderTs));
+            lastRenderTs = now;
+
+            const targetLength = buffer.length;
+            if (renderedLength < targetLength) {
+              const step = Math.max(1, Math.floor((charsPerSecond * deltaMs) / 1000));
+              renderedLength = Math.min(targetLength, renderedLength + step);
+              assistantEl.container.textContent = buffer.slice(0, renderedLength);
+              scrollToBottom();
+            }
+
+            if (renderedLength < buffer.length) {
+              scheduleRender();
+              return;
+            }
+
+            if (!streamCompleted) {
+              return;
+            }
+
+            const finalText = buffer.trim() ? buffer : "No response received.";
+            assistantEl.container.classList.remove("streaming");
+            assistantEl.container.innerHTML = marked.parse(finalText);
+            storeMessage("assistant", finalText, true);
+            appendLocalActivity("agent.response", "Stream complete.");
+            stopProgress(true);
+          };
+
           while (true) {
             const { value, done } = await reader.read();
             if (done) {
               break;
             }
             buffer += decoder.decode(value, { stream: true });
-            assistantEl.container.innerHTML = marked.parse(buffer);
-            scrollToBottom();
+            scheduleRender();
           }
           buffer += decoder.decode();
-          const finalText = buffer.trim() ? buffer : "No response received.";
-          assistantEl.container.innerHTML = marked.parse(finalText);
-          storeMessage("assistant", finalText, true);
-          appendLocalActivity("agent.response", "Stream complete.");
-          stopProgress(true);
+          streamCompleted = true;
+          scheduleRender();
         } catch {
           appendMessage("assistant", "Error: Failed to reach agent.", true, false);
           appendLocalActivity("agent.error", "Network error while streaming.");
