@@ -11,9 +11,7 @@
 It implements the **OODA Loop (Observe -> Orient -> Decide -> Act)** to autonomously detect, diagnose, and resolve production incidents, combining **Kubernetes (Fabric8)**, **GitLab**, **Jira**, and **web browsing** into a unified cognitive architecture.
 
 ## Demo
-[▶ Watch the demo](docs/demo.mp4)
-
-[![Demo](docs/demo.png)](docs/demo.mp4)
+https://github.com/qicesun/SRE-Agent-App/blob/main/docs/demo.mp4
 
 
 ## Features
