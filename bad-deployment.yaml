@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          # 👇 Simulate printing a Java error log, then crashing.
+          command: ["/bin/sh", "-c", "echo '2025-12-28 10:00:01 ERROR [PaymentService] java.lang.NullPointerException: Cannot invoke paymentStrategy.process() because paymentStrategy is null at com.qicesun.payment.service.RetryService.java:42'; sleep 10; exit 1"]
