@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SRE Cockpit</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+      :root {
+        --bg-0: #0b1220;
+        --bg-1: #111827;
+        --accent: #60a5fa;
+        --accent-soft: #cbd5f5;
+        --panel: rgba(15, 23, 42, 0.94);
+        --border: rgba(148, 163, 184, 0.2);
+        --shadow: rgba(15, 23, 42, 0.35);
+        --text: #e2e8f0;
+        --text-muted: #94a3b8;
+      }
+      body {
+        font-family: "Manrope", "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(180deg, #0b1220 0%, #0f172a 55%, #0b1220 100%);
+        color: var(--text);
+      }
+      body.theme-light {
+        --bg-0: #f8fafc;
+        --bg-1: #ffffff;
+        --accent: #2563eb;
+        --accent-soft: #1d4ed8;
+        --panel: rgba(255, 255, 255, 0.98);
+        --border: rgba(148, 163, 184, 0.3);
+        --shadow: rgba(15, 23, 42, 0.08);
+        --text: #0f172a;
+        --text-muted: #475569;
+        color: var(--text);
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 55%, #f8fafc 100%);
+      }
+      body.theme-light .grid-overlay {
+        opacity: 0.06;
+        background-image:
+          linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+      }
+      body.theme-light .scanline {
+        opacity: 0;
+      }
+      .grid-overlay {
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+        background-size: 32px 32px;
+        opacity: 0.08;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .scanline {
+        position: fixed;
+        inset: 0;
+        background: transparent;
+        opacity: 0;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        box-shadow: 0 10px 30px var(--shadow);
+        backdrop-filter: blur(8px);
+      }
+      .terminal-title {
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      .message {
+        border: 1px solid var(--border);
+        background: rgba(15, 23, 42, 0.55);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+        border-radius: 12px;
+      }
+      .message-user {
+        border-color: rgba(96, 165, 250, 0.4);
+        color: var(--text);
+        background: rgba(30, 64, 175, 0.2);
+      }
+      .message-assistant {
+        color: var(--text);
+        background: rgba(15, 23, 42, 0.75);
+      }
+      body.theme-light .message {
+        background: #f8fafc;
+      }
+      body.theme-light .message-user {
+        color: #0f172a;
+        background: #eff6ff;
+        border-color: rgba(37, 99, 235, 0.35);
+      }
+      body.theme-light .message-assistant {
+        color: #0f172a;
+        background: #f1f5f9;
+      }
+      body.theme-light #userInput {
+        background: #ffffff;
+        color: #0f172a;
+      }
+      #userInput {
+        background: rgba(15, 23, 42, 0.6);
+        color: var(--text);
+      }
+      .blink {
+        animation: blink 1s steps(1, end) infinite;
+      }
+      @keyframes blink {
+        0%, 49% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+      }
+      .markdown {
+        color: inherit;
+      }
+      .markdown h1,
+      .markdown h2,
+      .markdown h3 {
+        color: var(--accent);
+      }
+      .markdown code {
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        background: rgba(96, 165, 250, 0.12);
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+      .markdown pre {
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        padding: 12px;
+        border-radius: 8px;
+        overflow: auto;
+      }
+      body.theme-light .markdown pre {
+        background: #f8fafc;
+        border-color: rgba(148, 163, 184, 0.35);
+      }
+      .markdown table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 8px;
+      }
+      .markdown th,
+      .markdown td {
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        padding: 6px 10px;
+      }
+      .markdown th {
+        background: rgba(96, 165, 250, 0.12);
+      }
+      body.theme-light .markdown th,
+      body.theme-light .markdown td {
+        border-color: rgba(148, 163, 184, 0.4);
+      }
+      body.theme-light .markdown th {
+        background: rgba(37, 99, 235, 0.08);
+      }
+      .session-item.active {
+        background: rgba(96, 165, 250, 0.12);
+        border-color: rgba(96, 165, 250, 0.45);
+      }
+      body.theme-light .session-item.active {
+        background: rgba(37, 99, 235, 0.08);
+        border-color: rgba(37, 99, 235, 0.4);
+      }
+      .progress-bar {
+        position: relative;
+        height: 6px;
+        background: rgba(96, 165, 250, 0.18);
+        border: 1px solid rgba(96, 165, 250, 0.3);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        position: absolute;
+        inset: 0 auto 0 0;
+        height: 100%;
+        width: 40%;
+        background: linear-gradient(90deg, rgba(96, 165, 250, 0.9), rgba(96, 165, 250, 0.15));
+        opacity: 0;
+        transform: translateX(-60%);
+        animation: progress-flow 1.1s linear infinite;
+      }
+      .progress-bar.running .progress-fill {
+        opacity: 1;
+      }
+      @keyframes progress-flow {
+        0% { transform: translateX(-60%); }
+        100% { transform: translateX(260%); }
+      }
+      body.theme-light .progress-bar {
+        background: rgba(37, 99, 235, 0.12);
+        border-color: rgba(37, 99, 235, 0.25);
+      }
+      body.theme-light .progress-fill {
+        background: linear-gradient(90deg, rgba(37, 99, 235, 0.85), rgba(37, 99, 235, 0.2));
+      }
+      .activity-item {
+        border-bottom: 1px dashed rgba(148, 163, 184, 0.35);
+        padding-bottom: 6px;
+        margin-bottom: 6px;
+      }
+      body.theme-light .activity-item {
+        border-color: rgba(148, 163, 184, 0.4);
+      }
+      .activity-handle {
+        display: none;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        letter-spacing: 0.2em;
+        font-size: 10px;
+        color: var(--accent);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 6px 4px;
+        background: rgba(15, 23, 42, 0.85);
+        align-self: center;
+      }
+      body.theme-light .activity-handle {
+        background: #ffffff;
+      }
+      .activity-collapsed {
+        width: 28px !important;
+        padding: 8px 4px;
+      }
+      .activity-collapsed #activityHeader,
+      .activity-collapsed #activityFeed {
+        display: none;
+      }
+      .activity-collapsed .activity-handle {
+        display: block;
+      }
+      .text-muted {
+        color: var(--text-muted);
+      }
+      input:disabled,
+      select:disabled,
+      textarea:disabled,
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body class="h-screen overflow-hidden">
+    <div class="grid-overlay"></div>
+    <div class="scanline"></div>
+    <div class="relative z-10 h-full flex flex-col md:flex-row">
+      <aside class="panel w-full md:w-72 p-5 flex flex-col gap-4 min-h-0">
+        <div class="flex items-center justify-between">
+          <div class="terminal-title text-xs text-[var(--accent)]">Session History</div>
+          <button
+            id="newSessionBtn"
+            class="text-xs px-2 py-1 border border-[var(--border)] hover:border-[var(--accent)] transition"
+          >
+            New
+          </button>
+        </div>
+        <div class="text-[10px] text-muted">Click to switch sessions</div>
+        <ul id="sessionList" class="space-y-2 text-xs overflow-auto max-h-[35vh] md:max-h-[70vh]"></ul>
+
+        <div class="mt-auto panel p-3 flex flex-col gap-2">
+          <div class="terminal-title text-xs text-[var(--accent)]">System Status</div>
+          <div id="statusGrid" class="grid grid-cols-1 gap-2 text-xs"></div>
+        </div>
+      </aside>
+
+      <main class="flex-1 flex flex-col p-4 md:p-6 gap-4 min-h-0">
+        <header class="panel p-4 flex items-center justify-between">
+          <div>
+            <div class="terminal-title text-sm text-[var(--accent)]">SRE Cockpit</div>
+            <div class="text-xs text-muted">Multi-session incident console</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="text-[10px] text-muted" id="activeSessionLabel"></div>
+            <button
+              id="themeToggle"
+              class="text-xs px-3 py-1 border border-[var(--border)] hover:border-[var(--accent)] transition"
+            >
+              Light
+            </button>
+          </div>
+        </header>
+
+        <section id="configCard" class="panel p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <div class="terminal-title text-xs text-[var(--accent)]">Workspace Setup</div>
+              <div class="text-[10px] text-muted">Select Kubernetes scope and optional GitLab/Jira projects for this session.</div>
+            </div>
+            <div id="configStatus" class="text-[10px] text-muted">Setup required</div>
+          </div>
+          <div class="grid gap-3 md:grid-cols-3">
+            <div class="border border-[var(--border)] rounded p-3 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold">Kubernetes</div>
+                <label class="text-[10px] flex items-center gap-2">
+                  <input id="k8sEnabled" type="checkbox" class="h-3 w-3" />
+                  Enable
+                </label>
+              </div>
+              <select id="k8sNamespace" class="w-full bg-transparent border border-[var(--border)] rounded px-2 py-2 text-xs focus:outline-none focus:border-[var(--accent)]">
+                <option value="">Select a namespace</option>
+              </select>
+              <select id="k8sWorkload" class="w-full bg-transparent border border-[var(--border)] rounded px-2 py-2 text-xs focus:outline-none focus:border-[var(--accent)]">
+                <option value="">Select a workload (Deployment/StatefulSet)</option>
+              </select>
+              <div id="k8sHint" class="text-[10px] text-muted"></div>
+            </div>
+            <div class="border border-[var(--border)] rounded p-3 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold">GitLab</div>
+                <label class="text-[10px] flex items-center gap-2">
+                  <input id="gitlabEnabled" type="checkbox" class="h-3 w-3" />
+                  Enable
+                </label>
+              </div>
+              <select id="gitlabProject" class="w-full bg-transparent border border-[var(--border)] rounded px-2 py-2 text-xs focus:outline-none focus:border-[var(--accent)]">
+                <option value="">Select a GitLab project</option>
+              </select>
+              <div id="gitlabHint" class="text-[10px] text-muted"></div>
+            </div>
+            <div class="border border-[var(--border)] rounded p-3 flex flex-col gap-2">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-semibold">Jira</div>
+                <label class="text-[10px] flex items-center gap-2">
+                  <input id="jiraEnabled" type="checkbox" class="h-3 w-3" />
+                  Enable
+                </label>
+              </div>
+              <select id="jiraProject" class="w-full bg-transparent border border-[var(--border)] rounded px-2 py-2 text-xs focus:outline-none focus:border-[var(--accent)]">
+                <option value="">Select a Jira project</option>
+              </select>
+              <div id="jiraHint" class="text-[10px] text-muted"></div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <div id="configNote" class="text-[10px] text-muted"></div>
+            <div class="flex items-center gap-2">
+              <button
+                id="refreshConfigBtn"
+                class="text-xs px-3 py-1 border border-[var(--border)] hover:border-[var(--accent)] transition"
+              >
+                Refresh
+              </button>
+              <button
+                id="applyConfigBtn"
+                class="text-xs px-3 py-1 border border-[var(--border)] hover:border-[var(--accent)] transition"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section id="chatWindow" class="panel flex-1 p-4 overflow-y-auto space-y-3 min-h-0"></section>
+
+        <section class="panel p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <div class="terminal-title text-xs text-[var(--accent)]">Run Metrics</div>
+            <div id="runStats" class="text-[10px] text-muted">Idle</div>
+          </div>
+          <div id="progressBar" class="progress-bar">
+            <div id="progressFill" class="progress-fill"></div>
+          </div>
+          <div class="flex flex-col md:flex-row gap-3">
+            <textarea
+              id="userInput"
+              class="flex-1 bg-black/60 border border-[var(--border)] focus:border-[var(--accent)] outline-none p-3 text-sm"
+              rows="3"
+              placeholder="Describe the incident..."
+            ></textarea>
+            <button
+              id="sendBtn"
+              class="px-5 py-3 text-sm border border-[var(--border)] hover:border-[var(--accent)] transition"
+            >
+              Send
+            </button>
+          </div>
+        </section>
+      </main>
+
+      <aside id="activitySidebar" class="panel w-full md:w-72 p-5 flex flex-col gap-4 min-h-0">
+        <div id="activityHeader" class="flex items-center justify-between">
+          <div class="terminal-title text-xs text-[var(--accent)]">Agent Activity</div>
+          <button
+            id="activityToggle"
+            class="text-xs px-2 py-1 border border-[var(--border)] hover:border-[var(--accent)] transition"
+          >
+            Collapse
+          </button>
+        </div>
+        <div id="activityFeed" class="text-xs flex-1 min-h-0 overflow-y-auto pr-1"></div>
+        <button id="activityExpand" class="activity-handle">Activity</button>
+      </aside>
+    </div>
+
+        <script>
+      marked.setOptions({ breaks: true, gfm: true });
+
+      const sessionListEl = document.getElementById("sessionList");
+      const chatWindowEl = document.getElementById("chatWindow");
+      const userInputEl = document.getElementById("userInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const newSessionBtn = document.getElementById("newSessionBtn");
+      const activeSessionLabel = document.getElementById("activeSessionLabel");
+      const themeToggle = document.getElementById("themeToggle");
+      const activityToggle = document.getElementById("activityToggle");
+      const activitySidebar = document.getElementById("activitySidebar");
+      const statusGrid = document.getElementById("statusGrid");
+      const activityFeed = document.getElementById("activityFeed");
+      const progressBar = document.getElementById("progressBar");
+      const runStats = document.getElementById("runStats");
+      const activityExpand = document.getElementById("activityExpand");
+
+      const configStatus = document.getElementById("configStatus");
+      const configNote = document.getElementById("configNote");
+      const k8sEnabledEl = document.getElementById("k8sEnabled");
+      const k8sNamespaceEl = document.getElementById("k8sNamespace");
+      const k8sWorkloadEl = document.getElementById("k8sWorkload");
+      const k8sHint = document.getElementById("k8sHint");
+      const gitlabEnabledEl = document.getElementById("gitlabEnabled");
+      const gitlabProjectEl = document.getElementById("gitlabProject");
+      const gitlabHint = document.getElementById("gitlabHint");
+      const jiraEnabledEl = document.getElementById("jiraEnabled");
+      const jiraProjectEl = document.getElementById("jiraProject");
+      const jiraHint = document.getElementById("jiraHint");
+      const applyConfigBtn = document.getElementById("applyConfigBtn");
+      const refreshConfigBtn = document.getElementById("refreshConfigBtn");
+
+      const SESSION_KEY = "sre.sessions";
+      const ACTIVE_KEY = "sre.activeSession";
+      const MESSAGE_PREFIX = "sre.messages.";
+      const THEME_KEY = "sre.theme";
+      const DURATION_KEY = "sre.durations";
+
+      let activeSessionId = null;
+      let eventSource = null;
+      let lastEventId = 0;
+      let activityStreamErrorShown = false;
+
+      let configOptions = null;
+      let configReady = false;
+      let configDirty = false;
+      let pendingSessionConfig = null;
+      let pendingK8sWorkloadValue = null;
+      const k8sWorkloadCache = {};
+
+      function loadSessions() {
+        try {
+          const raw = localStorage.getItem(SESSION_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveSessions(sessions) {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(sessions));
+      }
+
+      function loadMessages(sessionId) {
+        try {
+          const raw = localStorage.getItem(MESSAGE_PREFIX + sessionId);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveMessages(sessionId, messages) {
+        localStorage.setItem(MESSAGE_PREFIX + sessionId, JSON.stringify(messages));
+      }
+
+      function storeMessage(role, content, isMarkdown) {
+        const messages = loadMessages(activeSessionId);
+        messages.push({ role, content, isMarkdown });
+        saveMessages(activeSessionId, messages);
+      }
+
+      function createSession() {
+        const id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : fallbackUuid();
+        const sessions = loadSessions();
+        sessions.unshift(id);
+        saveSessions(sessions);
+        setActiveSession(id);
+        renderSessionList();
+      }
+
+      function deleteSession(sessionId) {
+        const sessions = loadSessions().filter((id) => id !== sessionId);
+        localStorage.removeItem(MESSAGE_PREFIX + sessionId);
+        saveSessions(sessions);
+        fetch("/sessions/" + encodeURIComponent(sessionId), { method: "DELETE" }).catch(() => {});
+        if (activeSessionId === sessionId) {
+          if (sessions.length) {
+            setActiveSession(sessions[0]);
+          } else {
+            createSession();
+          }
+        } else {
+          renderSessionList();
+        }
+      }
+
+      function setActiveSession(sessionId) {
+        activeSessionId = sessionId;
+        localStorage.setItem(ACTIVE_KEY, sessionId);
+        activeSessionLabel.textContent = "Session: " + sessionId;
+        renderSessionList();
+        renderChat();
+        startEventStream(sessionId);
+        loadSessionConfig(sessionId);
+      }
+
+      function renderSessionList() {
+        const sessions = loadSessions();
+        sessionListEl.innerHTML = "";
+        sessions.forEach((id) => {
+          const item = document.createElement("li");
+          item.className = "session-item border border-[var(--border)] px-3 py-2 flex items-center justify-between gap-2 cursor-pointer transition";
+          if (id === activeSessionId) {
+            item.classList.add("active");
+          }
+          const label = document.createElement("span");
+          label.className = "truncate";
+          label.textContent = id;
+          label.title = id;
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "text-[10px] border border-[var(--border)] px-2 py-1 hover:border-[var(--accent)] transition";
+          removeBtn.textContent = "Del";
+          removeBtn.addEventListener("click", (event) => {
+            event.stopPropagation();
+            deleteSession(id);
+          });
+          item.appendChild(label);
+          item.appendChild(removeBtn);
+          item.addEventListener("click", () => setActiveSession(id));
+          sessionListEl.appendChild(item);
+        });
+      }
+
+      function renderChat() {
+        chatWindowEl.innerHTML = "";
+        const messages = loadMessages(activeSessionId);
+        messages.forEach((msg) => {
+          appendMessage(msg.role, msg.content, false, msg.isMarkdown);
+        });
+        scrollToBottom();
+      }
+
+      function appendMessage(role, content, shouldStore = true, isMarkdown = false) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "message p-3 rounded";
+        wrapper.classList.add(role === "user" ? "message-user" : "message-assistant");
+
+        if (isMarkdown) {
+          const container = document.createElement("div");
+          container.className = "markdown text-sm";
+          container.innerHTML = marked.parse(content || "");
+          wrapper.appendChild(container);
+        } else {
+          wrapper.textContent = content || "";
+        }
+
+        chatWindowEl.appendChild(wrapper);
+        if (shouldStore) {
+          storeMessage(role, content, isMarkdown);
+        }
+        scrollToBottom();
+        return wrapper;
+      }
+
+      function appendAssistantStream() {
+        const wrapper = document.createElement("div");
+        wrapper.className = "message message-assistant p-3 rounded";
+        const container = document.createElement("div");
+        container.className = "markdown text-sm";
+        wrapper.appendChild(container);
+        chatWindowEl.appendChild(wrapper);
+        scrollToBottom();
+        return { wrapper, container };
+      }
+
+      function scrollToBottom() {
+        chatWindowEl.scrollTop = chatWindowEl.scrollHeight;
+      }
+
+      function loadDurations() {
+        try {
+          const raw = localStorage.getItem(DURATION_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function saveDurations(values) {
+        localStorage.setItem(DURATION_KEY, JSON.stringify(values));
+      }
+
+      function recordDuration(ms) {
+        const values = loadDurations();
+        values.push(ms);
+        while (values.length > 8) {
+          values.shift();
+        }
+        saveDurations(values);
+      }
+
+      function estimateDuration() {
+        const values = loadDurations();
+        if (!values.length) {
+          return 6000;
+        }
+        const avg = values.reduce((sum, value) => sum + value, 0) / values.length;
+        return Math.min(Math.max(avg, 2500), 20000);
+      }
+
+      function formatSeconds(ms) {
+        return (ms / 1000).toFixed(1);
+      }
+
+      function startProgress() {
+        const start = performance.now();
+        runStats.textContent = "Running... 0.0s";
+        progressBar.classList.add("running");
+        const interval = setInterval(() => {
+          const elapsed = performance.now() - start;
+          runStats.textContent = "Running... " + formatSeconds(elapsed) + "s";
+        }, 250);
+
+        return (success) => {
+          clearInterval(interval);
+          const elapsed = performance.now() - start;
+          progressBar.classList.remove("running");
+          runStats.textContent = (success ? "Done in " : "Error after ") + formatSeconds(elapsed) + "s";
+          recordDuration(elapsed);
+          setTimeout(() => {
+            runStats.textContent = "Idle";
+          }, 900);
+        };
+      }
+
+      function setChatEnabled(enabled) {
+        sendBtn.disabled = !enabled;
+        userInputEl.disabled = !enabled;
+        userInputEl.placeholder = enabled
+          ? "Describe the incident..."
+          : "Complete workspace setup to start...";
+      }
+
+      async function loadConfigOptions() {
+        configStatus.textContent = "Loading tool options...";
+        configNote.textContent = "";
+        applyConfigBtn.disabled = true;
+        refreshConfigBtn.disabled = true;
+        try {
+          const response = await fetch("/config/options");
+          if (!response.ok) {
+            throw new Error("Failed to load options");
+          }
+          configOptions = await response.json();
+        } catch {
+          configOptions = {
+            k8s: { configured: false, error: "Kubernetes options unavailable.", projects: [] },
+            gitlab: { configured: false, error: "GitLab options unavailable.", projects: [] },
+            jira: { configured: false, error: "Jira options unavailable.", projects: [] }
+          };
+        }
+        renderConfigOptions();
+        applyConfigBtn.disabled = false;
+        refreshConfigBtn.disabled = false;
+        if (pendingSessionConfig) {
+          applySessionConfig(pendingSessionConfig);
+          pendingSessionConfig = null;
+        } else {
+          updateConfigStatus();
+        }
+      }
+
+      function renderConfigOptions() {
+        if (!configOptions) {
+          return;
+        }
+        populateSelect(k8sNamespaceEl, configOptions.k8s?.projects || [], "Select a namespace");
+        populateSelect(gitlabProjectEl, configOptions.gitlab?.projects || [], "Select a GitLab project");
+        populateSelect(jiraProjectEl, configOptions.jira?.projects || [], "Select a Jira project");
+        updateToolState();
+        if (k8sEnabledEl.checked && k8sNamespaceEl.value) {
+          ensureK8sWorkloads(k8sNamespaceEl.value, pendingK8sWorkloadValue);
+        }
+      }
+
+      function populateSelect(selectEl, projects, placeholder) {
+        const current = selectEl.value;
+        selectEl.innerHTML = "";
+        const placeholderOption = document.createElement("option");
+        placeholderOption.value = "";
+        placeholderOption.textContent = placeholder;
+        selectEl.appendChild(placeholderOption);
+        (projects || []).forEach((project) => {
+          const option = document.createElement("option");
+          option.value = project.id;
+          option.textContent = project.label || project.id;
+          selectEl.appendChild(option);
+        });
+        if (current) {
+          selectEl.value = current;
+        }
+      }
+
+      function updateToolState() {
+        const k8sAvailable = isK8sAvailable();
+        k8sEnabledEl.disabled = !k8sAvailable;
+        if (!k8sAvailable) {
+          k8sEnabledEl.checked = false;
+        }
+        k8sNamespaceEl.disabled = !k8sAvailable || !k8sEnabledEl.checked;
+        if (!k8sEnabledEl.checked) {
+          k8sNamespaceEl.value = "";
+          clearWorkloadSelect();
+        }
+        const namespaceSelected = !!k8sNamespaceEl.value;
+        k8sWorkloadEl.disabled = !k8sAvailable || !k8sEnabledEl.checked || !namespaceSelected;
+        k8sHint.textContent = describeK8sStatus();
+
+        const gitlabAvailable = isGitlabAvailable();
+        gitlabEnabledEl.disabled = !gitlabAvailable;
+        if (!gitlabAvailable) {
+          gitlabEnabledEl.checked = false;
+        }
+        gitlabProjectEl.disabled = !gitlabAvailable || !gitlabEnabledEl.checked;
+        if (!gitlabEnabledEl.checked) {
+          gitlabProjectEl.value = "";
+        }
+        gitlabHint.textContent = describeToolStatus("GitLab", configOptions?.gitlab, gitlabEnabledEl.checked);
+
+        const jiraAvailable = isJiraAvailable();
+        jiraEnabledEl.disabled = !jiraAvailable;
+        if (!jiraAvailable) {
+          jiraEnabledEl.checked = false;
+        }
+        jiraProjectEl.disabled = !jiraAvailable || !jiraEnabledEl.checked;
+        if (!jiraEnabledEl.checked) {
+          jiraProjectEl.value = "";
+        }
+        jiraHint.textContent = describeToolStatus("Jira", configOptions?.jira, jiraEnabledEl.checked);
+      }
+
+      function clearWorkloadSelect() {
+        k8sWorkloadEl.innerHTML = "";
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = "Select a workload (Deployment/StatefulSet)";
+        k8sWorkloadEl.appendChild(option);
+        pendingK8sWorkloadValue = null;
+      }
+
+      function describeK8sStatus() {
+        const info = configOptions?.k8s;
+        if (!info) {
+          return "Kubernetes options not loaded.";
+        }
+        if (!info.configured) {
+          return info.error || "Kubernetes not configured.";
+        }
+        if (!info.projects || !info.projects.length) {
+          return info.error || "No namespaces found.";
+        }
+        if (!k8sEnabledEl.checked) {
+          return "Disabled for this session.";
+        }
+        if (!k8sNamespaceEl.value) {
+          return "Namespace and workload are required to start.";
+        }
+        if (!k8sWorkloadEl.value) {
+          return "Select a workload in the chosen namespace.";
+        }
+        return "Scope locked to a single workload.";
+      }
+
+      function describeToolStatus(label, info, enabled) {
+        if (!info) {
+          return label + " options not loaded.";
+        }
+        if (!info.configured) {
+          return info.error || (label + " not configured.");
+        }
+        if (!info.projects || !info.projects.length) {
+          return info.error || "No projects found.";
+        }
+        if (!enabled) {
+          return "Disabled for this session.";
+        }
+        if (info.error) {
+          return info.error;
+        }
+        return info.projects.length + " projects available.";
+      }
+
+      function isGitlabAvailable() {
+        return !!(configOptions && configOptions.gitlab && configOptions.gitlab.configured
+          && Array.isArray(configOptions.gitlab.projects) && configOptions.gitlab.projects.length);
+      }
+
+      function isK8sAvailable() {
+        return !!(configOptions && configOptions.k8s && configOptions.k8s.configured
+          && Array.isArray(configOptions.k8s.projects) && configOptions.k8s.projects.length);
+      }
+
+      function isJiraAvailable() {
+        return !!(configOptions && configOptions.jira && configOptions.jira.configured
+          && Array.isArray(configOptions.jira.projects) && configOptions.jira.projects.length);
+      }
+
+      async function ensureK8sWorkloads(namespace, desiredValue) {
+        const ns = (namespace || "").trim();
+        if (!ns) {
+          clearWorkloadSelect();
+          return;
+        }
+        if (k8sWorkloadCache[ns]) {
+          populateSelect(
+            k8sWorkloadEl,
+            k8sWorkloadCache[ns],
+            "Select a workload (Deployment/StatefulSet)"
+          );
+          if (desiredValue) {
+            k8sWorkloadEl.value = desiredValue;
+          }
+          updateToolState();
+          return;
+        }
+        k8sWorkloadEl.disabled = true;
+        clearWorkloadSelect();
+        const loading = document.createElement("option");
+        loading.value = "";
+        loading.textContent = "Loading workloads...";
+        k8sWorkloadEl.appendChild(loading);
+
+        try {
+          const response = await fetch(
+            "/config/k8s/workloads?namespace=" + encodeURIComponent(ns)
+          );
+          if (!response.ok) {
+            throw new Error("Failed to load workloads.");
+          }
+          const data = await response.json();
+          if (!data.configured) {
+            throw new Error(data.error || "Workloads unavailable.");
+          }
+          const workloads = (data.workloads || []).map((w) => ({
+            id: w.id,
+            label: w.label || w.id
+          }));
+          k8sWorkloadCache[ns] = workloads;
+          populateSelect(
+            k8sWorkloadEl,
+            workloads,
+            "Select a workload (Deployment/StatefulSet)"
+          );
+          if (desiredValue) {
+            k8sWorkloadEl.value = desiredValue;
+          }
+        } catch (err) {
+          k8sWorkloadCache[ns] = [];
+          clearWorkloadSelect();
+          const message = err && err.message ? err.message : "Failed to load workloads.";
+          k8sHint.textContent = message;
+        }
+
+        updateToolState();
+      }
+
+      async function loadSessionConfig(sessionId) {
+        configReady = false;
+        configDirty = false;
+        setChatEnabled(false);
+        if (!sessionId) {
+          return;
+        }
+        configStatus.textContent = "Loading session config...";
+        configNote.textContent = "";
+        try {
+          const response = await fetch("/config/session", {
+            headers: { "X-Session-Id": sessionId }
+          });
+          if (!response.ok) {
+            const errorText = await response.text();
+            configStatus.textContent = "Setup required";
+            configNote.textContent = errorText || "Session config missing.";
+            return;
+          }
+          const data = await response.json();
+          if (!configOptions) {
+            pendingSessionConfig = data;
+            return;
+          }
+          applySessionConfig(data);
+        } catch {
+          configStatus.textContent = "Setup error";
+          configNote.textContent = "Failed to load session config.";
+        }
+      }
+
+      function applySessionConfig(data) {
+        const config = data && data.config ? data.config : {};
+        const hasStoredConfig = !!(data && data.configured);
+        k8sEnabledEl.checked = hasStoredConfig ? !!config.k8sEnabled : isK8sAvailable();
+        k8sNamespaceEl.value = config.k8sNamespace || "";
+        pendingK8sWorkloadValue = config.k8sWorkloadKind && config.k8sWorkloadName
+          ? config.k8sWorkloadKind + ":" + config.k8sWorkloadName
+          : "";
+
+        gitlabEnabledEl.checked = !!config.gitlabEnabled;
+        gitlabProjectEl.value = config.gitlabProjectId || "";
+
+        jiraEnabledEl.checked = !!config.jiraEnabled;
+        jiraProjectEl.value = config.jiraProjectKey || "";
+        updateToolState();
+        configDirty = false;
+        const finalize = () => {
+          configReady = hasStoredConfig && isConfigValid();
+          pendingK8sWorkloadValue = null;
+          updateConfigStatus();
+        };
+
+        if (k8sEnabledEl.checked && k8sNamespaceEl.value) {
+          ensureK8sWorkloads(k8sNamespaceEl.value, pendingK8sWorkloadValue).then(finalize);
+          return;
+        }
+        finalize();
+      }
+
+      function isConfigValid() {
+        if (k8sEnabledEl.checked) {
+          if (!k8sNamespaceEl.value || !k8sWorkloadEl.value || !isK8sAvailable()) {
+            return false;
+          }
+        }
+        if (gitlabEnabledEl.checked) {
+          if (!gitlabProjectEl.value || !isGitlabAvailable()) {
+            return false;
+          }
+        }
+        if (jiraEnabledEl.checked) {
+          if (!jiraProjectEl.value || !isJiraAvailable()) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      function setConfigDirty(dirty) {
+        configDirty = dirty;
+        if (dirty) {
+          configReady = false;
+        }
+        updateConfigStatus();
+      }
+
+      function updateConfigStatus() {
+        if (!configOptions) {
+          configStatus.textContent = "Loading tool options...";
+          configNote.textContent = "";
+          setChatEnabled(false);
+          return;
+        }
+        if (configDirty) {
+          configStatus.textContent = "Pending changes";
+          configNote.textContent = "Apply workspace setup to continue.";
+          setChatEnabled(false);
+          return;
+        }
+        if (configReady) {
+          configStatus.textContent = "Ready";
+          configNote.textContent = "Workspace locked for this session.";
+          setChatEnabled(true);
+          return;
+        }
+        configStatus.textContent = "Setup required";
+        configNote.textContent = "Select namespace + workload and click Apply to start chatting.";
+        setChatEnabled(false);
+      }
+
+      function validateConfigPayload(payload) {
+        if (payload.k8sEnabled) {
+          if (!payload.k8sNamespace) {
+            return "Select a Kubernetes namespace or disable Kubernetes.";
+          }
+          if (!payload.k8sWorkloadKind || !payload.k8sWorkloadName) {
+            return "Select a Kubernetes workload in the chosen namespace.";
+          }
+        }
+        if (payload.gitlabEnabled && !payload.gitlabProjectId) {
+          return "Select a GitLab project or disable GitLab.";
+        }
+        if (payload.jiraEnabled && !payload.jiraProjectKey) {
+          return "Select a Jira project or disable Jira.";
+        }
+        if (payload.k8sEnabled && !isK8sAvailable()) {
+          return "Kubernetes is not available on this server.";
+        }
+        if (payload.gitlabEnabled && !isGitlabAvailable()) {
+          return "GitLab is not available on this server.";
+        }
+        if (payload.jiraEnabled && !isJiraAvailable()) {
+          return "Jira is not available on this server.";
+        }
+        return null;
+      }
+
+      function parseWorkloadValue(value) {
+        const raw = (value || "").trim();
+        if (!raw) {
+          return null;
+        }
+        const idx = raw.indexOf(":");
+        if (idx <= 0 || idx === raw.length - 1) {
+          return null;
+        }
+        return {
+          kind: raw.substring(0, idx),
+          name: raw.substring(idx + 1)
+        };
+      }
+
+      async function applyConfig() {
+        if (!activeSessionId) {
+          return;
+        }
+        const workload = parseWorkloadValue(k8sWorkloadEl.value);
+        const payload = {
+          k8sEnabled: k8sEnabledEl.checked,
+          k8sNamespace: k8sNamespaceEl.value || "",
+          k8sWorkloadKind: workload ? workload.kind : "",
+          k8sWorkloadName: workload ? workload.name : "",
+          gitlabEnabled: gitlabEnabledEl.checked,
+          gitlabProjectId: gitlabProjectEl.value || "",
+          jiraEnabled: jiraEnabledEl.checked,
+          jiraProjectKey: jiraProjectEl.value || ""
+        };
+        const validationError = validateConfigPayload(payload);
+        if (validationError) {
+          configStatus.textContent = "Setup error";
+          configNote.textContent = validationError;
+          setChatEnabled(false);
+          return;
+        }
+        try {
+          const response = await fetch("/config/session", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Session-Id": activeSessionId
+            },
+            body: JSON.stringify(payload)
+          });
+          if (!response.ok) {
+            const errorText = await response.text();
+            configStatus.textContent = "Setup error";
+            configNote.textContent = errorText || "Failed to save configuration.";
+            setChatEnabled(false);
+            return;
+          }
+          configDirty = false;
+          configReady = true;
+          updateConfigStatus();
+        } catch {
+          configStatus.textContent = "Setup error";
+          configNote.textContent = "Failed to reach server.";
+          setChatEnabled(false);
+        }
+      }
+
+      async function sendMessage() {
+        if (!configReady) {
+          updateConfigStatus();
+          appendLocalActivity("agent.activity", "Workspace setup required before chatting.");
+          return;
+        }
+        const text = (userInputEl.value || "").trim();
+        if (!text) {
+          return;
+        }
+        appendMessage("user", text, true, false);
+        userInputEl.value = "";
+
+        const stopProgress = startProgress();
+        appendLocalActivity("agent.request", "Request sent, awaiting response.");
+
+        try {
+          const response = await fetch("/chat/stream", {
+            method: "POST",
+            headers: {
+              "Content-Type": "text/plain; charset=utf-8",
+              "X-Session-Id": activeSessionId
+            },
+            body: text
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            appendMessage("assistant", "Error: " + errorText, true, false);
+            appendLocalActivity("agent.error", "Request failed: " + errorText);
+            stopProgress(false);
+            return;
+          }
+
+          if (!response.body) {
+            const responseText = await response.text();
+            appendMessage("assistant", responseText, true, true);
+            appendLocalActivity("agent.response", "Response received (non-stream)." );
+            stopProgress(true);
+            return;
+          }
+
+          const assistantEl = appendAssistantStream();
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) {
+              break;
+            }
+            buffer += decoder.decode(value, { stream: true });
+            assistantEl.container.innerHTML = marked.parse(buffer);
+            scrollToBottom();
+          }
+          buffer += decoder.decode();
+          const finalText = buffer.trim() ? buffer : "No response received.";
+          assistantEl.container.innerHTML = marked.parse(finalText);
+          storeMessage("assistant", finalText, true);
+          appendLocalActivity("agent.response", "Stream complete.");
+          stopProgress(true);
+        } catch {
+          appendMessage("assistant", "Error: Failed to reach agent.", true, false);
+          appendLocalActivity("agent.error", "Network error while streaming.");
+          stopProgress(false);
+        }
+      }
+
+      function fallbackUuid() {
+        const template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+        return template.replace(/[xy]/g, (char) => {
+          const rand = Math.floor(Math.random() * 16);
+          const value = char === "x" ? rand : (rand & 0x3) | 0x8;
+          return value.toString(16);
+        });
+      }
+
+      async function loadStatus() {
+        try {
+          const response = await fetch("/status");
+          if (!response.ok) {
+            statusGrid.textContent = "Status unavailable.";
+            return;
+          }
+          const data = await response.json();
+          renderStatus(data);
+        } catch {
+          statusGrid.textContent = "Status unavailable.";
+        }
+      }
+
+      function renderStatus(status) {
+        const entries = [
+          { key: "k8s", label: "Kubernetes", data: status.k8s },
+          { key: "openai", label: "OpenAI", data: status.openai },
+          { key: "gitlab", label: "GitLab", data: status.gitlab },
+          { key: "jira", label: "Jira", data: status.jira }
+        ];
+        statusGrid.innerHTML = "";
+        entries.forEach((entry) => {
+          const card = document.createElement("div");
+          card.className = "border border-[var(--border)] p-2 rounded";
+          const title = document.createElement("div");
+          title.className = "text-[11px] text-[var(--accent)]";
+          const statusLabel = entry.data && entry.data.status ? entry.data.status : "unknown";
+          title.textContent = entry.label + " - " + statusLabel;
+          card.appendChild(title);
+          const detailWrap = document.createElement("div");
+          detailWrap.className = "text-[10px] text-muted space-y-1 mt-1";
+          const details = entry.data && entry.data.details ? entry.data.details : {};
+          Object.keys(details).forEach((key) => {
+            const line = document.createElement("div");
+            line.textContent = key + ": " + details[key];
+            detailWrap.appendChild(line);
+          });
+          if (!Object.keys(details).length) {
+            const line = document.createElement("div");
+            line.textContent = "no details";
+            detailWrap.appendChild(line);
+          }
+          card.appendChild(detailWrap);
+          statusGrid.appendChild(card);
+        });
+      }
+
+      function startEventStream(sessionId) {
+        lastEventId = 0;
+        activityFeed.innerHTML = "";
+        appendLocalActivity("agent.activity", "Waiting for agent actions...");
+        activityStreamErrorShown = false;
+        if (eventSource) {
+          eventSource.close();
+          eventSource = null;
+        }
+        if (!sessionId) {
+          return;
+        }
+        const url =
+          "/events/" + encodeURIComponent(sessionId) + "/stream?afterId=" + lastEventId;
+        eventSource = new EventSource(url);
+        eventSource.addEventListener("agent-event", (event) => {
+          if (!event || !event.data) {
+            return;
+          }
+          try {
+            const parsed = JSON.parse(event.data);
+            appendActivity(parsed);
+          } catch {
+            appendActivity({ source: "agent.event", message: event.data });
+          }
+        });
+        eventSource.onopen = () => {
+          if (activityStreamErrorShown) {
+            appendLocalActivity("agent.activity", "Activity stream connected.");
+            activityStreamErrorShown = false;
+          }
+        };
+        eventSource.onerror = () => {
+          if (!activityStreamErrorShown) {
+            appendLocalActivity(
+              "agent.activity",
+              "Activity stream disconnected, reconnecting..."
+            );
+            activityStreamErrorShown = true;
+          }
+        };
+      }
+
+      function appendActivity(event, isLocal) {
+        if (!event) {
+          return;
+        }
+        if (!isLocal && typeof event.id === "number") {
+          lastEventId = Math.max(lastEventId, event.id);
+        }
+        const item = document.createElement("div");
+        item.className = "activity-item";
+        const header = document.createElement("div");
+        header.className = "text-[10px] text-muted";
+        const timestamp = event.timestamp
+          ? new Date(event.timestamp).toLocaleTimeString()
+          : new Date().toLocaleTimeString();
+        header.textContent = timestamp + " | " + formatSource(event.source);
+        const message = document.createElement("div");
+        message.className = "text-[11px]";
+        message.textContent = event.message || "";
+        item.appendChild(header);
+        item.appendChild(message);
+        activityFeed.appendChild(item);
+        activityFeed.scrollTop = activityFeed.scrollHeight;
+      }
+
+      function appendLocalActivity(source, message) {
+        appendActivity({ source, message, timestamp: new Date().toISOString() }, true);
+      }
+
+      function formatSource(source) {
+        if (!source) {
+          return "event";
+        }
+        const parts = source.split(".");
+        if (parts[0] === "k8s") {
+          return "Kubernetes / " + (parts[1] || "action");
+        }
+        if (parts[0] === "gitlab") {
+          return "GitLab / " + (parts[1] || "action");
+        }
+        if (parts[0] === "jira") {
+          return "Jira / " + (parts[1] || "action");
+        }
+        if (parts[0] === "web") {
+          return "Web / " + (parts[1] || "scrape");
+        }
+        if (parts[0] === "agent") {
+          return "Agent / " + (parts[1] || "event");
+        }
+        return source;
+      }
+
+      sendBtn.addEventListener("click", sendMessage);
+      userInputEl.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          sendMessage();
+        }
+      });
+      newSessionBtn.addEventListener("click", createSession);
+      themeToggle.addEventListener("click", () => {
+        const next = document.body.classList.contains("theme-light") ? "dark" : "light";
+        applyTheme(next);
+        localStorage.setItem(THEME_KEY, next);
+      });
+      activityToggle.addEventListener("click", () => {
+        const collapsed = activitySidebar.classList.toggle("activity-collapsed");
+        activityToggle.textContent = collapsed ? "Expand" : "Collapse";
+      });
+      activityExpand.addEventListener("click", () => {
+        activitySidebar.classList.remove("activity-collapsed");
+        activityToggle.textContent = "Collapse";
+      });
+      k8sEnabledEl.addEventListener("change", () => {
+        updateToolState();
+        setConfigDirty(true);
+        if (k8sEnabledEl.checked && k8sNamespaceEl.value) {
+          ensureK8sWorkloads(k8sNamespaceEl.value);
+        }
+      });
+      k8sNamespaceEl.addEventListener("change", () => {
+        clearWorkloadSelect();
+        updateToolState();
+        setConfigDirty(true);
+        if (k8sEnabledEl.checked && k8sNamespaceEl.value) {
+          ensureK8sWorkloads(k8sNamespaceEl.value);
+        }
+      });
+      k8sWorkloadEl.addEventListener("change", () => {
+        setConfigDirty(true);
+        updateToolState();
+      });
+      gitlabEnabledEl.addEventListener("change", () => {
+        updateToolState();
+        setConfigDirty(true);
+      });
+      gitlabProjectEl.addEventListener("change", () => {
+        setConfigDirty(true);
+      });
+      jiraEnabledEl.addEventListener("change", () => {
+        updateToolState();
+        setConfigDirty(true);
+      });
+      jiraProjectEl.addEventListener("change", () => {
+        setConfigDirty(true);
+      });
+      applyConfigBtn.addEventListener("click", applyConfig);
+      refreshConfigBtn.addEventListener("click", () => {
+        Object.keys(k8sWorkloadCache).forEach((key) => delete k8sWorkloadCache[key]);
+        loadConfigOptions();
+      });
+
+      (function init() {
+        const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+        applyTheme(savedTheme);
+        let sessions = loadSessions();
+        if (!sessions.length) {
+          createSession();
+        } else {
+          const storedActive = localStorage.getItem(ACTIVE_KEY);
+          const initial = storedActive && sessions.includes(storedActive) ? storedActive : sessions[0];
+          setActiveSession(initial);
+        }
+        loadStatus();
+        loadConfigOptions();
+        setInterval(loadStatus, 30000);
+      })();
+
+      function applyTheme(theme) {
+        if (theme === "light") {
+          document.body.classList.add("theme-light");
+          themeToggle.textContent = "Dark";
+        } else {
+          document.body.classList.remove("theme-light");
+          themeToggle.textContent = "Light";
+        }
+      }
+    </script>
+  </body>
+</html>
+
