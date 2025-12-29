@@ -10,14 +10,14 @@
 **SRE-Agent** is an **enterprise-grade AIOps framework** for Kubernetes, built in Java, to replace human firefighting with **AI reasoning**.
 It implements the **OODA Loop (Observe -> Orient -> Decide -> Act)** to autonomously detect, diagnose, and resolve production incidents, combining **Kubernetes (Fabric8)**, **GitLab**, **Jira**, and **web browsing** into a unified cognitive architecture.
 
-## Demo
-https://youtu.be/G__SXo8P7X0
-
 ## Features
 - 🔭 **Deep Observability:** Direct K8s API integration to inspect pod state and fetch logs in real time.
 - 🧠 **Cognitive Diagnosis:** Correlates stack traces with recent GitLab commits to identify likely regressions ("who broke the build").
 - 🛠️ **Self-Healing Action:** Executes safe remediation steps such as rolling restarts (and can be extended to rollbacks).
 - 🎫 **Incident Management:** Auto-creates Jira tickets with rich context (symptoms, logs, suspected root cause, and next actions).
+
+## Demo
+https://youtu.be/G__SXo8P7X0
 
 ## Architecture & Technology
 
