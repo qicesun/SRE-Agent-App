@@ -1,9 +1,19 @@
-# 默认忽略的文件
-/shelf/
-/target/
-/.idea/
-# 基于编辑器的 HTTP 客户端请求
-/httpRequests/
-# Datasource local storage ignored files
-/dataSources/
-/dataSources.local.xml
+# IDEA 配置文件
+.idea/
+*.iml
+
+# 编译输出
+target/
+out/
+
+# 敏感配置文件 (Java)
+src/main/resources/application-local.properties
+application.properties
+
+# 日志与临时文件
+*.log
+log.txt
+
+# Python 缓存
+__pycache__/
+*.py[cod]
