@@ -104,26 +104,6 @@ cd SRE-Agent-App
   - GitLab: `GITLAB_URL`, `GITLAB_TOKEN`
   - Jira: `JIRA_URL`, `JIRA_EMAIL`, `JIRA_TOKEN`
 
-Example (macOS/Linux):
-```bash
-export OPENAI_API_KEY="..."
-export GITLAB_URL="https://gitlab.com"
-export GITLAB_TOKEN="..."
-export JIRA_URL="https://your-domain.atlassian.net"
-export JIRA_EMAIL="you@example.com"
-export JIRA_TOKEN="..."
-```
-
-Example (Windows PowerShell):
-```powershell
-$env:OPENAI_API_KEY="..."
-$env:GITLAB_URL="https://gitlab.com"
-$env:GITLAB_TOKEN="..."
-$env:JIRA_URL="https://your-domain.atlassian.net"
-$env:JIRA_EMAIL="you@example.com"
-$env:JIRA_TOKEN="..."
-```
-
 3) Start Minikube (if you don’t already have a cluster running):
 ```bash
 minikube start
