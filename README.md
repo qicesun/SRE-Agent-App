@@ -68,7 +68,7 @@ Key building blocks:
 | 🧠 Agent Backbone | LangChain4j 0.35.0 | System prompt, tool calling, and memory orchestration |
 | ☸️ Kubernetes | Fabric8 Kubernetes Client | Native cluster inspection and remediation |
 | 🔌 Integrations | JDK `HttpClient` | GitLab/Jira REST calls without heavy dependencies |
-| 🎛️ Frontend | Tailwind CSS | "Hacker-style" SRE Cockpit UI |
+| 🎛️ Frontend | Tailwind CSS | SRE Cockpit UI |
 
 ## Getting Started
 
