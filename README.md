@@ -17,6 +17,7 @@ It implements the **OODA Loop (Observe -> Orient -> Decide -> Act)** to autonomo
 - 🎫 **Incident Management:** Auto-creates Jira tickets with rich context (symptoms, logs, suspected root cause, and next actions).
 
 ## Demo
+<img width="2559" height="1342" alt="image" src="https://github.com/user-attachments/assets/0aa8b294-a283-49da-b668-9026d55192ce" />
 https://youtu.be/G__SXo8P7X0
 
 ## Architecture & Technology
