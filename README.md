@@ -129,7 +129,7 @@ mvn spring-boot:run
 ```
 
 3) Open the SRE Cockpit:
-- `http://localhost:8080`
+- `http://localhost:8080/index.html`
 
 4) Configure the session scope (required) and start chatting:
 - Select **Namespace**: `default`
