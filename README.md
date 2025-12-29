@@ -18,6 +18,30 @@ It implements the **OODA Loop (Observe -> Orient -> Decide -> Act)** to autonomo
 
 ## Architecture & Technology
 
+## Architecture
+
+```mermaid
+graph TD
+    User[User / SRE] -->|Chat Interface| API[Spring Boot Controller]
+    API --> Agent[DevOps Assistant @AiService]
+    
+    subgraph "The Brain (OODA Loop)"
+        Agent -->|Observe| Memory[Chat Memory]
+        Agent -->|Orient| LLM[OpenAI GPT-4o]
+    end
+    
+    subgraph "The Tools (Effectors)"
+        Agent -->|Manage Cluster| K8s[Kubernetes Tool / Fabric8]
+        Agent -->|Check Code| GitLab[GitLab Tool]
+        Agent -->|Track Issue| Jira[Jira Tool]
+        Agent -->|Search Info| Web[Web Scraper]
+    end
+    
+    K8s -->|Control| Minikube[Minikube Cluster]
+    GitLab -->|API| GitLabCloud[GitLab SaaS]
+    Jira -->|API| JiraCloud[Jira Cloud]
+    Web -->|Scrape| Internet[StackOverflow / Docs]
+```
 ### 🧠 Cognitive Architecture (The Brain)
 This is not a chatbot. It is an agentic workflow built on **Spring Boot 3** and **LangChain4j**, designed to run the **OODA loop** on live production signals.
 
@@ -124,7 +148,7 @@ mvn spring-boot:run
 - Click **Apply**
 
 5) Type the incident prompt:
-> "The payment-service is acting up. Fix it."
+> "The payment-service in the system is down. Please check the logs for me. If it's a simple issue like a CrashLoopBackOff, try restarting it. If it cannot be fixed, please submit a JIRA ticket for me."
 
 ### 👀 Expected Behavior (What you will see)
 - ☸️ **Detect:** The agent observes pod instability and identifies `CrashLoopBackOff` / repeated restarts.
