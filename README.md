@@ -18,29 +18,64 @@ It implements the **OODA Loop (Observe -> Orient -> Decide -> Act)** to autonomo
 
 ## Architecture & Technology
 
-## Architecture
+### 🗺️ High-level Architecture
 
 ```mermaid
-graph TD
-    User[User / SRE] -->|Chat Interface| API[Spring Boot Controller]
-    API --> Agent[DevOps Assistant @AiService]
-    
-    subgraph "The Brain (OODA Loop)"
-        Agent -->|Observe| Memory[Chat Memory]
-        Agent -->|Orient| LLM[OpenAI GPT-4o]
-    end
-    
-    subgraph "The Tools (Effectors)"
-        Agent -->|Manage Cluster| K8s[Kubernetes Tool / Fabric8]
-        Agent -->|Check Code| GitLab[GitLab Tool]
-        Agent -->|Track Issue| Jira[Jira Tool]
-        Agent -->|Search Info| Web[Web Scraper]
-    end
-    
-    K8s -->|Control| Minikube[Minikube Cluster]
-    GitLab -->|API| GitLabCloud[GitLab SaaS]
-    Jira -->|API| JiraCloud[Jira Cloud]
-    Web -->|Scrape| Internet[StackOverflow / Docs]
+flowchart TD
+  U[User / SRE] --> UI[SRE Cockpit (Tailwind)]
+  UI -->|HTTP (X-Session-Id)| API[Spring Boot API]
+  API --> AGENT[DevOpsAssistant (LangChain4j AiServices)]
+
+  subgraph Context["Context & Guardrails"]
+    SYS[DevOpsSystemMessageProvider<br/>Elite SRE persona + injected defaults]
+    MEM[SessionMemoryStore<br/>per-session memory window]
+    CFG[SessionConfigStore<br/>namespace/workload + GitLab/Jira selection]
+  end
+
+  AGENT --> SYS
+  SYS --> CFG
+  AGENT --> MEM
+
+  subgraph Brain["Cognitive Engine (OODA Loop)"]
+    OBS[Observe] --> ORI[Orient] --> DEC[Decide] --> ACT[Act]
+    ACT --> OBS
+    LLM[OpenAI Chat Model<br/>(configurable)]
+    ORI --> LLM
+    DEC --> LLM
+  end
+
+  AGENT --> OBS
+
+  subgraph Tools["Tools (Effectors)"]
+    K8S[KubernetesTool (Fabric8)]
+    GL[GitLabTool (HTTP)]
+    JIRA[JiraTool (REST v3)]
+    WEB[WebScraperTool (Jsoup)]
+  end
+
+  OBS --> K8S
+  ORI -.-> GL
+  ORI -.-> WEB
+  ACT --> K8S
+  ACT -.-> JIRA
+
+  K8S --> CLUSTER[(Kubernetes Cluster)]
+  GL --> GITLAB[(GitLab API)]
+  JIRA --> JIRAC[(Jira Cloud API)]
+  WEB --> WWW[(Docs / Runbooks)]
+
+  AGENT --> EVT[AgentEventStore<br/>telemetry + SSE stream]
+  EVT --> UI
+
+  subgraph Roadmap["Roadmap (Planned)"]
+    RAG[Runbook RAG / Knowledge Base]
+    POLICY[Policy & Safety Gates]
+    CD[Canary / Rollback Controller]
+  end
+
+  ORI -.-> RAG
+  DEC -.-> POLICY
+  ACT -.-> CD
 ```
 ### 🧠 Cognitive Architecture (The Brain)
 This is not a chatbot. It is an agentic workflow built on **Spring Boot 3** and **LangChain4j**, designed to run the **OODA loop** on live production signals.
