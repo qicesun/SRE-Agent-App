@@ -16,6 +16,9 @@ It implements the **OODA Loop (Observe -> Orient -> Decide -> Act)** to autonomo
 - 🛠️ **Self-Healing Action:** Executes safe remediation steps such as rolling restarts (and can be extended to rollbacks).
 - 🎫 **Incident Management:** Auto-creates Jira tickets with rich context (symptoms, logs, suspected root cause, and next actions).
 
+## Demo
+https://youtu.be/G__SXo8P7X0
+
 ## Architecture & Technology
 
 ### 🗺️ High-level Architecture
