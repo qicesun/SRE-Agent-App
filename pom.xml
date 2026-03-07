@@ -13,7 +13,7 @@
 
     <groupId>com.qicesun</groupId>
     <artifactId>sre-agent</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0</version>
     <name>SRE Agent</name>
     <description>Spring Boot SRE Agent with LangChain4j and Kubernetes client</description>
     <packaging>jar</packaging>

@@ -92,7 +92,7 @@ Key building blocks:
 ### 📦 Installation & Setup
 1) Clone the repo:
 ```bash
-git clone https://github.com/<your-org>/SRE-Agent-App.git
+git clone https://github.com/qicesun/SRE-Agent-App.git
 cd SRE-Agent-App
 ```
 
@@ -151,3 +151,11 @@ mvn spring-boot:run
 ## Notes
 - Session scope (K8s namespace/workload, GitLab project, Jira project key) is stored in `SessionConfigStore` keyed by `X-Session-Id`.
 - The agent system prompt is rebuilt every turn and includes the latest session config (credentials are never injected into the prompt).
+
+## Maintainer Workflows / Roadmap
+- **Release cadence:** Public milestones are captured as GitHub releases. `v0.1.0` establishes the first maintained baseline for the project.
+- **Evaluation work:** Current maintainer work focuses on repeatable incident-evaluation scenarios, demo hardening, and validation of agent behavior across Kubernetes, GitLab, Jira, and web-research paths.
+- **Integration hardening:** Near-term follow-up work prioritizes safer action boundaries, more robust external integration handling, and clearer operator-facing failure modes.
+- **Documentation:** README, release notes, and issue tracking are kept in sync so the public repo reflects the current maintenance state, known limitations, and next steps.
+
+Track active maintenance in GitHub via the `v0.1.0` release and the `v0.2.0 Evaluation Hardening` milestone issues.

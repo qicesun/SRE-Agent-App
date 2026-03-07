@@ -1,0 +1,35 @@
+name: Maintainer task
+description: Track roadmap, evaluation, release, or documentation work for the public project.
+title: "[Maintainer]: "
+labels:
+  - maintenance
+body:
+  - type: dropdown
+    id: task-type
+    attributes:
+      label: Task type
+      description: Which maintenance stream does this belong to?
+      options:
+        - Roadmap
+        - Evaluation
+        - Release
+        - Documentation
+        - Integration hardening
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the work that needs to be tracked.
+      placeholder: Add a short, concrete description of the maintenance task.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Expected outcome
+      description: What should be true when this task is done?
+      placeholder: Document the observable result or repository artifact expected from this task.
+    validations:
+      required: true
